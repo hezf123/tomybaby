@@ -61,6 +61,11 @@ const initialUsers: User[] = [
   },
 ];
 
+// 计算initialUsers的指纹（用于检测代码修改）
+function getInitialUsersFingerprint(): string {
+  return initialUsers.map(u => u.username).sort().join('|');
+}
+
 // 从localStorage加载用户数据
 // 始终以initialUsers为基础，合并用户通过管理后台新增的用户
 function loadUsers(): User[] {
@@ -68,14 +73,21 @@ function loadUsers(): User[] {
     return [...initialUsers];
   }
   try {
+    const storedFingerprint = localStorage.getItem(STORAGE_KEY + '_fingerprint');
+    const currentFingerprint = getInitialUsersFingerprint();
+
+    // 如果指纹不匹配，说明initialUsers被修改了，清除旧数据重新初始化
+    if (storedFingerprint !== currentFingerprint) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
       const storedUsers: User[] = JSON.parse(data);
-      // 从storage中提取非initial的用户（通过管理后台添加的）
-      const extraUsers = storedUsers.filter(
-        su => !initialUsers.some(iu => iu.id === su.id)
-      );
-      // 以initialUsers为准，追加额外用户
+      // 用username匹配，找出通过管理后台手动添加的用户
+      const initialUsernames = new Set(initialUsers.map(u => u.username));
+      const extraUsers = storedUsers.filter(u => !initialUsernames.has(u.username));
+      // 始终以initialUsers为准，追加手动添加的用户
       const merged = [...initialUsers, ...extraUsers];
       saveUsers(merged);
       return merged;
@@ -83,7 +95,7 @@ function loadUsers(): User[] {
   } catch (e) {
     console.error('加载用户数据失败:', e);
   }
-  // 如果没有数据，初始化
+  // 没有数据或指纹不匹配，初始化
   saveUsers(initialUsers);
   return [...initialUsers];
 }
@@ -95,6 +107,7 @@ function saveUsers(users: User[]): void {
   }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    localStorage.setItem(STORAGE_KEY + '_fingerprint', getInitialUsersFingerprint());
   } catch (e) {
     console.error('保存用户数据失败:', e);
   }
