@@ -95,7 +95,7 @@ export default function HeartExplosion({
       initialPositions[i * 3 + 2] = r * Math.cos(phi);
 
       const hue = 0.75 + Math.random() * 0.1;
-      const color = new THREE.Color().setHSL(hue % 1, 0.85, 0.55 + Math.random() * 0.25);
+      const color = new THREE.Color().setHSL(hue % 1, 0.95, 0.35 + Math.random() * 0.3);
       colors[i * 3] = color.r;
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
