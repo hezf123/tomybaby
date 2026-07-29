@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Cake, Sparkles, LogOut, Calendar, X } from 'lucide-react';
+import { Heart, Cake, Sparkles, LogOut, Calendar, X, UtensilsCrossed } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ParticleBackground from '@/components/ParticleBackground';
 
@@ -108,7 +108,7 @@ function HomeContent() {
           </motion.div>
 
           {/* 功能卡片 */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* 表白卡片 */}
             <motion.div
               initial={{ x: -20, opacity: 0 }}
@@ -166,6 +166,35 @@ function HomeContent() {
                 <div className="flex items-center text-purple-500 font-medium">
                   <Sparkles className="w-4 h-4 mr-2" />
                   查看祝福 →
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 今天吃什么卡片 */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.02, y: -4 }}
+              onClick={() => router.push('/food')}
+              className="glass-card rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-300/30 rounded-full -translate-y-16 -translate-x-16 group-hover:scale-150 transition-transform duration-500" />
+              <div className="relative">
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 shadow-love mb-4"
+                >
+                  <UtensilsCrossed className="w-8 h-8 text-white" />
+                </motion.div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">今天吃什么</h3>
+                <p className="text-gray-600 mb-4">
+                  选择困难？让转盘帮你决定今天的美味
+                </p>
+                <div className="flex items-center text-orange-500 font-medium">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  去看看 →
                 </div>
               </div>
             </motion.div>
@@ -251,7 +280,7 @@ function HomeContent() {
                 className="space-y-3"
               >
                 <p className="text-gray-600 leading-relaxed">
-                  请宝宝耐心等待
+                  请宝宝耐心等待，生日再来查看~
                 </p>
                 
                 {/* 倒计时显示 */}
