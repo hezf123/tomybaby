@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Heart, Cake, Sparkles, LogOut, Settings, Calendar } from 'lucide-react';
+import { Heart, Cake, Sparkles, LogOut, Calendar } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ParticleBackground from '@/components/ParticleBackground';
 
@@ -57,15 +57,6 @@ function HomeContent() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/admin')}
-              className="p-3 rounded-full glass hover:bg-white/40 transition-all"
-              title="管理后台"
-            >
-              <Settings className="w-5 h-5 text-gray-600" />
-            </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
