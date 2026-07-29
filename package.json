@@ -1,0 +1,31 @@
+{
+  "name": "toyou-love-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "一个浪漫的情侣互动Web应用",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "three": "^0.167.1",
+    "framer-motion": "^11.11.0",
+    "lucide-react": "^0.454.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/three": "^0.167.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5"
+  }
+}

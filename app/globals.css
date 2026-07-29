@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground: #ffffff;
+  --background: #fef3f8;
+}
+
+body {
+  color: #374151;
+  background: linear-gradient(135deg, #ffeef8 0%, #fff0f5 50%, #f3e5f5 100%);
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px 0 rgba(255, 105, 180, 0.15);
+  }
+
+  .text-gradient-love {
+    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 50%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-love {
+    box-shadow: 0 10px 40px rgba(255, 105, 180, 0.3);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 0 60px rgba(192, 132, 252, 0.2);
+  }
+
+  .btn-love {
+    @apply px-6 py-3 rounded-full font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);
+  }
+
+  .btn-love:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 20, 147, 0.5);
+  }
+
+  .btn-love:active {
+    transform: translateY(0);
+  }
+
+  .input-love {
+    @apply w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 outline-none;
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 182, 193, 0.5);
+    color: #1f2937;
+  }
+
+  .input-love::placeholder {
+    color: #9ca3af;
+  }
+
+  .input-love:focus {
+    border-color: #ff69b4;
+    box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.2);
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 192, 203, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 105, 180, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 105, 180, 0.7);
+}

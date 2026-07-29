@@ -1,0 +1,15 @@
+# Cloudflare Pages Configuration
+# This file configures the build process for Cloudflare Pages
+
+# Build settings
+build:
+  command: npm run build
+  output: out
+
+# Environment variables (optional)
+# production:
+#   NODE_VERSION: '20'
+
+# Routes configuration for SPA
+routes:
+  '/*': '/index.html'
