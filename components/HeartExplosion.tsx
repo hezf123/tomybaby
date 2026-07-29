@@ -63,7 +63,7 @@ function createScatterPoints(count: number): Float32Array {
 export default function HeartExplosion({
   trigger,
   onComplete,
-  particleCount = 30000,
+  particleCount = 300000,
 }: HeartExplosionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
