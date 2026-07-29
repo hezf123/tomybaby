@@ -2,20 +2,23 @@
 
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Heart, Cake, Sparkles, LogOut, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Cake, Sparkles, LogOut, Calendar, X } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ParticleBackground from '@/components/ParticleBackground';
 
 function HomeContent() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [showBirthdayPopup, setShowBirthdayPopup] = useState(false);
 
   if (!user) return null;
 
   // 计算生日信息
   const today = new Date();
   const birthday = new Date(user.birthday);
+  const isTodayBirthday = today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate();
   const nextBirthday = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
   if (nextBirthday < today) {
     nextBirthday.setFullYear(today.getFullYear() + 1);
@@ -25,6 +28,14 @@ function HomeContent() {
   const handleLogout = () => {
     logout();
     router.push('/login');
+  };
+
+  const handleBirthdayClick = () => {
+    if (isTodayBirthday) {
+      router.push('/birthday');
+    } else {
+      setShowBirthdayPopup(true);
+    }
   };
 
   return (
@@ -133,7 +144,7 @@ function HomeContent() {
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
               whileHover={{ scale: 1.02, y: -4 }}
-              onClick={() => router.push('/birthday')}
+              onClick={handleBirthdayClick}
               className="glass-card rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-300/30 rounded-full -translate-y-16 -translate-x-16 group-hover:scale-150 transition-transform duration-500" />
@@ -175,6 +186,120 @@ function HomeContent() {
           </motion.div>
         </div>
       </div>
+
+      {/* 生日未到弹窗 */}
+      <AnimatePresence>
+        {showBirthdayPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowBirthdayPopup(false)}
+          >
+            {/* 遮罩层 */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            
+            {/* 弹窗内容 */}
+            <motion.div
+              initial={{ scale: 0.5, y: 40, rotate: -5 }}
+              animate={{ scale: 1, y: 0, rotate: 0 }}
+              exit={{ scale: 0.8, y: 20, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative glass-card rounded-3xl p-8 max-w-sm w-full text-center overflow-hidden"
+            >
+              {/* 装饰圆形 */}
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-300/40 rounded-full" />
+              <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-pink-300/40 rounded-full" />
+              
+              {/* 关闭按钮 */}
+              <button
+                onClick={() => setShowBirthdayPopup(false)}
+                className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/40 transition-colors z-10"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+
+              {/* 表情动画 */}
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.15, 1],
+                  rotate: [0, -8, 8, -4, 0]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-7xl mb-4 relative"
+              >
+                🎂
+              </motion.div>
+
+              {/* 标题 */}
+              <motion.h3
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-2xl font-bold text-gradient-love mb-3"
+              >
+                生日还未到哦~
+              </motion.h3>
+
+              {/* 内容 */}
+              <motion.div
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="space-y-3"
+              >
+                <p className="text-gray-600 leading-relaxed">
+                  请宝宝耐心等待
+                </p>
+                
+                {/* 倒计时显示 */}
+                <div className="bg-pink-50/50 rounded-2xl p-4 mt-4">
+                  <div className="flex items-center justify-center gap-2 text-pink-500">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      距离生日还有
+                    </span>
+                  </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-4xl font-bold text-pink-500 mt-1"
+                  >
+                    {daysUntilBirthday}
+                  </motion.div>
+                  <p className="text-sm text-pink-400">天</p>
+                </div>
+
+                {/* 小装饰 */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {['💕', '🌸', '💝', '🌷'].map((emoji, i) => (
+                    <motion.span
+                      key={i}
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                      className="text-xl"
+                    >
+                      {emoji}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* 关闭按钮 */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowBirthdayPopup(false)}
+                className="mt-6 px-8 py-3 rounded-2xl bg-gradient-love text-white font-medium shadow-love hover:shadow-lg transition-all"
+              >
+                知道啦 ❤️
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
