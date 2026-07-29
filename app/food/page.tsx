@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Sparkles, UtensilsCrossed, RotateCcw, ChevronRight, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -56,11 +56,12 @@ function SpinningWheel({ foods, onResult }: { foods: FoodItem[]; onResult: (food
   const [spinning, setSpinning] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const animationRef = useRef<number | null>(null);
+  const rotationRef = useRef<number>(0);
 
-  const wheelFoods = foods.slice(0, 12);
-  const segmentAngle = (2 * Math.PI) / wheelFoods.length;
+  const wheelFoods = useMemo(() => foods.slice(0, 12), [foods]);
+  const segmentAngle = useMemo(() => (2 * Math.PI) / wheelFoods.length, [wheelFoods.length]);
 
-  const drawWheel = useCallback((rotation: number = 0) => {
+  const drawWheel = useCallback((rotation: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -150,7 +151,7 @@ function SpinningWheel({ foods, onResult }: { foods: FoodItem[]; onResult: (food
     ctx.textBaseline = 'middle';
     ctx.fillText('GO', center, center);
 
-    // 指针（三角形）
+    // 指针（三角形，指向角度 0 / 3 点钟方向）
     ctx.beginPath();
     ctx.moveTo(size - 25, center);
     ctx.lineTo(size - 50, center - 16);
@@ -163,8 +164,9 @@ function SpinningWheel({ foods, onResult }: { foods: FoodItem[]; onResult: (food
     ctx.stroke();
   }, [wheelFoods, segmentAngle]);
 
+  // 只在挂载时初始化一次
   useEffect(() => {
-    drawWheel(0);
+    drawWheel(rotationRef.current);
   }, [drawWheel]);
 
   const spin = () => {
@@ -175,19 +177,21 @@ function SpinningWheel({ foods, onResult }: { foods: FoodItem[]; onResult: (food
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // 随机目标角度
+    // 随机目标索引
     const targetIndex = Math.floor(Math.random() * wheelFoods.length);
-    // 在目标扇区内取一个随机偏移（避免压在边界上）
-    const randomOffset = segmentAngle * (0.15 + Math.random() * 0.7);
-    // 关键：指针在角度 0 的位置（右边缘中间）
-    // 目标扇区要"进入"指针，需旋转使得 (targetIndex*segmentAngle + randomOffset + rotation) % 2π == 0
-    // 即 rotation = (2π - targetIndex*segmentAngle - randomOffset) + N 整圈
-    const N = 5 + Math.random() * 3; // 5~8 圈
-    const totalRotation = 2 * Math.PI * N + (2 * Math.PI - targetIndex * segmentAngle - randomOffset);
+    // 扇区内随机偏移（-0.4 到 +0.4 个扇区宽度，避免压线）
+    const jitter = (Math.random() - 0.5) * segmentAngle * 0.8;
+    // 目标：让目标扇区的中心 + jitter 停在指针处（角度 0）
+    // 扇区中心角度 = targetIndex*segmentAngle + segmentAngle/2 + rotation
+    // 要求：= 0 (mod 2π)
+    // => rotation = -(targetIndex*segmentAngle + segmentAngle/2) + 2π*N + jitter
+    const N = 5 + Math.floor(Math.random() * 3); // 5~7 圈
+    const targetRotation = (2 * Math.PI * N) - targetIndex * segmentAngle - segmentAngle / 2 + jitter;
+    const startRotation = rotationRef.current;
+    const delta = targetRotation - startRotation;
 
     const duration = 4000 + Math.random() * 1000;
     let startTime: number | null = null;
-    const startRotation = 0;
 
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
@@ -196,13 +200,15 @@ function SpinningWheel({ foods, onResult }: { foods: FoodItem[]; onResult: (food
 
       // easeOutCubic
       const eased = 1 - Math.pow(1 - progress, 3);
-      const currentRotation = startRotation + totalRotation * eased;
+      const currentRotation = startRotation + delta * eased;
+      rotationRef.current = currentRotation;
 
       drawWheel(currentRotation);
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
       } else {
+        rotationRef.current = targetRotation;
         setSpinning(false);
         setSelectedIndex(targetIndex);
         onResult(wheelFoods[targetIndex]);
@@ -334,7 +340,7 @@ function FoodContent() {
           >
             🍽️
           </motion.div>
-          <h1 className="text-3xl font-bold text-gradient-love mb-2">今天吃什么</h1>
+          <h1 className="text-3xl font-bold text-gradient-love mb-2">宝宝今天吃什么</h1>
           <p className="text-gray-500">把选择交给命运，把美味留给自己</p>
         </motion.div>
 

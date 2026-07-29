@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Cake, Sparkles, LogOut, Calendar, X, UtensilsCrossed } from 'lucide-react';
+import { Heart, Cake, Sparkles, LogOut, Calendar, X, UtensilsCrossed, Gift } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ParticleBackground from '@/components/ParticleBackground';
 
@@ -108,7 +108,7 @@ function HomeContent() {
           </motion.div>
 
           {/* 功能卡片 */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* 表白卡片 */}
             <motion.div
               initial={{ x: -20, opacity: 0 }}
@@ -129,7 +129,7 @@ function HomeContent() {
                 </motion.div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">表白页面</h3>
                 <p className="text-gray-600 mb-4">
-                  说出你心中最想说的话，让爱意在此刻绽放
+                  心中最想说的话，让爱意在此刻绽放
                 </p>
                 <div className="flex items-center text-pink-500 font-medium">
                   <Sparkles className="w-4 h-4 mr-2" />
@@ -195,6 +195,35 @@ function HomeContent() {
                 <div className="flex items-center text-orange-500 font-medium">
                   <Sparkles className="w-4 h-4 mr-2" />
                   去看看 →
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 想一起做的事情卡片 */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              whileHover={{ scale: 1.02, y: -4 }}
+              onClick={() => router.push('/wish')}
+              className="glass-card rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-300/30 rounded-full -translate-y-16 -translate-x-16 group-hover:scale-150 transition-transform duration-500" />
+              <div className="relative">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.8 }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-love mb-4"
+                >
+                  <Gift className="w-8 h-8 text-white" />
+                </motion.div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">想一起做的事</h3>
+                <p className="text-gray-600 mb-4">
+                  记录属于我们的心愿清单，一起慢慢实现
+                </p>
+                <div className="flex items-center text-teal-500 font-medium">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  查看心愿 →
                 </div>
               </div>
             </motion.div>
