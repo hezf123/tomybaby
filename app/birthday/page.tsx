@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Cake, Gift, Star, Sparkles, Calendar, Heart } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ParticleBackground from '@/components/ParticleBackground';
-import HeartExplosion from '@/components/HeartExplosion';
+import RoseExplosion from '@/components/RoseExplosion';
 import { useAuth } from '@/lib/AuthContext';
 
 const birthdayWishes = [
@@ -63,7 +63,7 @@ function BirthdayContent() {
 
   const handleCelebrate = () => {
     setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 8000);
+    setTimeout(() => setShowCelebration(false), 6500);
     // 切换到下一个祝福
     setWishIndex((prev) => (prev + 1) % birthdayWishes.length);
   };
@@ -73,7 +73,7 @@ function BirthdayContent() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <ParticleBackground color="#c084fc" />
-      <HeartExplosion trigger={showCelebration} particleCount={2500} />
+      <RoseExplosion trigger={showCelebration} particleCount={4000} />
 
       <div className="relative z-10 p-4 md:p-8">
         {/* 顶部导航 */}
