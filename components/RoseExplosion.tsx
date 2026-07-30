@@ -150,20 +150,65 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
     const width = mount.clientWidth;
     const height = mount.clientHeight;
 
+    // ===== 移动端自适应 =====
+    const isMobile = width < 768;
+    const aspect = width / height;
+    const isPortrait = aspect < 1;
+
+    // 粒子数量：移动端减半
+    const adjustedParticleCount = isMobile
+      ? Math.min(particleCount, 1800)
+      : particleCount;
+
+    // 粒子大小：竖屏调大，横屏默认
+    const baseSize = isPortrait ? 0.32 : 0.25;
+    const subSize = isPortrait ? 0.26 : 0.2;
+    const sparkleSize = isPortrait ? 0.12 : 0.08;
+
+    // 副花位置：根据屏幕比例调整（竖屏纵向分布，横屏横向分布）
+    const subRoseConfigs = isPortrait
+      ? [
+          // 竖屏：围绕中心纵向分布，避免超出左右
+          { offset: [0, 2.5, -1.5] as [number, number, number], scale: 1.0, petals: 5 },
+          { offset: [-1.6, -2, -0.5] as [number, number, number], scale: 0.9, petals: 6 },
+          { offset: [1.6, -2, -0.5] as [number, number, number], scale: 0.9, petals: 6 },
+        ]
+      : [
+          // 横屏：原来的分布
+          { offset: [-3, 1.5, -1] as [number, number, number], scale: 1.2, petals: 5 },
+          { offset: [3, 1.5, -1] as [number, number, number], scale: 1.2, petals: 5 },
+          { offset: [-2.5, -2, -0.5] as [number, number, number], scale: 1.0, petals: 6 },
+          { offset: [2.5, -2, -0.5] as [number, number, number], scale: 1.0, petals: 6 },
+          { offset: [0, 3, -1.5] as [number, number, number], scale: 0.9, petals: 4 },
+        ];
+
+    // 主玫瑰花大小随屏幕调整
+    const mainScale = isPortrait ? 2.2 : 2.5;
+
+    // 相机参数：竖屏相机拉远一点，避免超出
+    const cameraZ = isPortrait ? 7.5 : 6;
+    const gatherFromZ = isPortrait ? 9.5 : 8;
+
+    // DPR：移动端限制为 1.25（避免过高DPR导致性能崩溃）
+    const targetDPR = isMobile ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 2);
+
+    // 背景光点数量：移动端减少
+    const sparkleCount = isMobile ? 400 : 800;
+
     // ===== 场景初始化 =====
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x1a0010, 0.05);
 
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
-    camera.position.set(0, 0, 6);
+    camera.position.set(0, 0, cameraZ);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
+      antialias: !isMobile, // 移动端关闭抗锯齿，性能优先
+      powerPreference: isMobile ? 'default' : 'high-performance',
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(targetDPR);
     renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
 
@@ -183,14 +228,15 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
     }[] = [];
 
     // 主玫瑰花（中心，大）
-    const mainRoseCount = Math.floor(particleCount * 0.5);
-    const mainRose = createRosePositions(mainRoseCount, 6, 2.5, [0, 0, 0]);
+    const mainRoseRatio = 0.5; // 50% 粒子给主花
+    const mainRoseCount = Math.floor(adjustedParticleCount * mainRoseRatio);
+    const mainRose = createRosePositions(mainRoseCount, 6, mainScale, [0, 0, 0]);
     const mainGeometry = new THREE.BufferGeometry();
     mainGeometry.setAttribute('position', new THREE.BufferAttribute(mainRose.positions, 3));
     mainGeometry.setAttribute('color', new THREE.BufferAttribute(mainRose.colors, 3));
 
     const mainMaterial = new THREE.PointsMaterial({
-      size: 0.25,
+      size: baseSize,
       map: petalTexture,
       vertexColors: true,
       transparent: true,
@@ -203,24 +249,17 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
     const mainPoints = new THREE.Points(mainGeometry, mainMaterial);
     scene.add(mainPoints);
 
-    // 副玫瑰花（周围，小）
-    const subRoseConfigs = [
-      { offset: [-3, 1.5, -1] as [number, number, number], scale: 1.2, petals: 5 },
-      { offset: [3, 1.5, -1] as [number, number, number], scale: 1.2, petals: 5 },
-      { offset: [-2.5, -2, -0.5] as [number, number, number], scale: 1.0, petals: 6 },
-      { offset: [2.5, -2, -0.5] as [number, number, number], scale: 1.0, petals: 6 },
-      { offset: [0, 3, -1.5] as [number, number, number], scale: 0.9, petals: 4 },
-    ];
-
+    // 副玫瑰花（周围，小）—— 根据屏幕比例自适应位置
     subRoseConfigs.forEach((config) => {
-      const subCount = Math.floor(particleCount * 0.1);
+      // 剩余粒子平均分给副花
+      const subCount = Math.floor((adjustedParticleCount - mainRoseCount) / subRoseConfigs.length);
       const subRose = createRosePositions(subCount, config.petals, config.scale, config.offset);
       const subGeo = new THREE.BufferGeometry();
       subGeo.setAttribute('position', new THREE.BufferAttribute(subRose.positions, 3));
       subGeo.setAttribute('color', new THREE.BufferAttribute(subRose.colors, 3));
 
       const subMat = new THREE.PointsMaterial({
-        size: 0.2,
+        size: subSize,
         map: petalTexture,
         vertexColors: true,
         transparent: true,
@@ -325,7 +364,7 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
     sparkleGeo.setAttribute('color', new THREE.BufferAttribute(sparkleColors, 3));
 
     const sparkleMat = new THREE.PointsMaterial({
-      size: 0.08,
+      size: sparkleSize,
       map: glowTexture,
       vertexColors: true,
       transparent: true,
@@ -347,12 +386,14 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
     const EXPLODE_DURATION = 1500;
     const FADE_DURATION = 1000;
 
-    // 聚合阶段的起始位置（随机散布在远处）
+    // 聚合阶段的起始位置（随机散布在远处，随屏幕比例调整）
+    const scatterW = isPortrait ? 18 : 25;
+    const scatterH = isPortrait ? 30 : 20;
     const startPositions = roseData.map(rd => {
       const sp = new Float32Array(rd.originalPositions.length);
       for (let i = 0; i < sp.length; i += 3) {
-        sp[i] = (Math.random() - 0.5) * 25;
-        sp[i + 1] = (Math.random() - 0.5) * 20;
+        sp[i] = (Math.random() - 0.5) * scatterW;
+        sp[i + 1] = (Math.random() - 0.5) * scatterH;
         sp[i + 2] = (Math.random() - 0.5) * 15 - 3;
       }
       return sp;
@@ -473,10 +514,10 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
         camera.position.y = 0;
       }
 
-      // 相机缓慢推进
+      // 相机缓慢推进（根据屏幕比例自适应距离）
       if (phase === 'gather') {
         const t = elapsed / GATHER_DURATION;
-        camera.position.z = 8 - t * 2; // 从 8 推进到 6
+        camera.position.z = gatherFromZ - t * (gatherFromZ - cameraZ);
       }
 
       renderer.render(scene, camera);

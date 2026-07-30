@@ -28,6 +28,23 @@ function BirthdayContent() {
   const [wishIndex, setWishIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isBirthday, setIsBirthday] = useState(false);
+  const [roseCount, setRoseCount] = useState(4000);
+
+  // 根据屏幕宽度自适应粒子数
+  useEffect(() => {
+    const updateCount = () => {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 1440;
+      if (w < 480) setRoseCount(1500);
+      else if (w < 768) setRoseCount(2000);
+      else if (w < 1024) setRoseCount(2800);
+      else setRoseCount(4000);
+    };
+    updateCount();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', updateCount);
+      return () => window.removeEventListener('resize', updateCount);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -73,7 +90,7 @@ function BirthdayContent() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <ParticleBackground color="#c084fc" />
-      <RoseExplosion trigger={showCelebration} particleCount={4000} />
+      <RoseExplosion trigger={showCelebration} particleCount={roseCount} />
 
       <div className="relative z-10 p-4 md:p-8">
         {/* 顶部导航 */}
