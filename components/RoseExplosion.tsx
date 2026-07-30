@@ -160,18 +160,46 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
       ? Math.min(particleCount, 1800)
       : particleCount;
 
-    // 粒子大小：竖屏调大，横屏默认
-    const baseSize = isPortrait ? 0.32 : 0.25;
-    const subSize = isPortrait ? 0.26 : 0.2;
-    const sparkleSize = isPortrait ? 0.12 : 0.08;
+    // ====== 根据屏幕比例精确控制场景大小 ======
+    // PerspectiveCamera fov=60, 半高视场 = tan(30°) ≈ 0.577
+    // 在 cameraZ 距离下，屏幕可见高度 = 2 * cameraZ * tan(fov/2)
+    const FOV = 60;
+    const TAN_HALF_FOV = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
 
-    // 副花位置：根据屏幕比例调整（竖屏纵向分布，横屏横向分布）
+    // 安全系数：主花占据可见区域的比例（留出 40% 余量）
+    const SAFE_RATIO = 0.6;
+
+    // 先算主花尺度，再反推相机距离（更精确）
+    // 竖屏：以"宽度"为约束；横屏：以"高度"为约束
+    let cameraZ: number;
+    let mainScale: number;
+    if (isPortrait) {
+      // 竖屏：宽度紧张 → 用宽度约束
+      mainScale = 1.6; // 主花scale 1.6 对应直径≈1.6*2.3≈3.7
+      // 所需可见宽度 = (mainScale * 2.3) / SAFE_RATIO
+      // cameraZ 与 可见宽 关系：visibleWidth = 2 * Z * tan(fov/2) * aspect
+      const needVisibleWidth = (mainScale * 2.3) / SAFE_RATIO;
+      cameraZ = needVisibleWidth / (2 * TAN_HALF_FOV * aspect);
+    } else {
+      // 横屏：高度紧张 → 用高度约束
+      mainScale = 2.5;
+      const needVisibleHeight = (mainScale * 2.3) / SAFE_RATIO;
+      cameraZ = needVisibleHeight / (2 * TAN_HALF_FOV);
+    }
+    const gatherFromZ = cameraZ + 2; // 聚合起始在更远 2 单位
+
+    // 粒子大小：基于相机距离微调（距离越远，粒子稍微调大保持可见）
+    const baseSize = isPortrait ? 0.26 * (cameraZ / 7.5) : 0.25 * (cameraZ / 6);
+    const subSize = isPortrait ? 0.22 * (cameraZ / 7.5) : 0.2 * (cameraZ / 6);
+    const sparkleSize = isPortrait ? 0.10 * (cameraZ / 7.5) : 0.08 * (cameraZ / 6);
+
+    // 副花位置和大小：竖屏只放 2 朵，纵向近一点，全部往内靠
     const subRoseConfigs = isPortrait
       ? [
-          // 竖屏：围绕中心纵向分布，避免超出左右
-          { offset: [0, 2.5, -1.5] as [number, number, number], scale: 1.0, petals: 5 },
-          { offset: [-1.6, -2, -0.5] as [number, number, number], scale: 0.9, petals: 6 },
-          { offset: [1.6, -2, -0.5] as [number, number, number], scale: 0.9, petals: 6 },
+          // 竖屏手机：2 朵副花，上下分布，偏移更小
+          { offset: [0, 2.0 * (cameraZ / 7.5), -1] as [number, number, number], scale: 0.75, petals: 5 },
+          { offset: [-1.1 * (cameraZ / 7.5), -1.8 * (cameraZ / 7.5), -0.5] as [number, number, number], scale: 0.65, petals: 6 },
+          { offset: [1.1 * (cameraZ / 7.5), -1.8 * (cameraZ / 7.5), -0.5] as [number, number, number], scale: 0.65, petals: 6 },
         ]
       : [
           // 横屏：原来的分布
@@ -181,13 +209,6 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
           { offset: [2.5, -2, -0.5] as [number, number, number], scale: 1.0, petals: 6 },
           { offset: [0, 3, -1.5] as [number, number, number], scale: 0.9, petals: 4 },
         ];
-
-    // 主玫瑰花大小随屏幕调整
-    const mainScale = isPortrait ? 2.2 : 2.5;
-
-    // 相机参数：竖屏相机拉远一点，避免超出
-    const cameraZ = isPortrait ? 7.5 : 6;
-    const gatherFromZ = isPortrait ? 9.5 : 8;
 
     // DPR：移动端限制为 1.25（避免过高DPR导致性能崩溃）
     const targetDPR = isMobile ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 2);
@@ -273,7 +294,8 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
       scene.add(subPoints);
       roses.push(subPoints);
 
-      // 存储爆炸速度
+      // 存储爆炸速度（竖屏手机减慢，避免飞出屏幕）
+      const speedScale = isPortrait ? 0.55 : 1.0;
       const velocities = new Float32Array(subCount * 3);
       const rotations = new Float32Array(subCount);
       const rotationSpeeds = new Float32Array(subCount);
@@ -282,12 +304,12 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
         const dy = subRose.positions[i * 3 + 1] - config.offset[1];
         const dz = subRose.positions[i * 3 + 2] - config.offset[2];
         const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-        const speed = 0.02 + Math.random() * 0.05;
-        velocities[i * 3] = (dx / len) * speed + (Math.random() - 0.5) * 0.03;
-        velocities[i * 3 + 1] = (dy / len) * speed + (Math.random() - 0.5) * 0.03;
-        velocities[i * 3 + 2] = (dz / len) * speed + (Math.random() - 0.5) * 0.03;
+        const speed = (0.02 + Math.random() * 0.05) * speedScale;
+        velocities[i * 3] = (dx / len) * speed + (Math.random() - 0.5) * 0.03 * speedScale;
+        velocities[i * 3 + 1] = (dy / len) * speed + (Math.random() - 0.5) * 0.03 * speedScale;
+        velocities[i * 3 + 2] = (dz / len) * speed + (Math.random() - 0.5) * 0.03 * speedScale;
         rotations[i] = Math.random() * Math.PI * 2;
-        rotationSpeeds[i] = (Math.random() - 0.5) * 0.1;
+        rotationSpeeds[i] = (Math.random() - 0.5) * 0.1 * speedScale;
       }
 
       roseData.push({
@@ -300,7 +322,8 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
       });
     });
 
-    // 主玫瑰花爆炸数据
+    // 主玫瑰花爆炸数据（竖屏手机减慢，防止飞出）
+    const mainSpeedScale = isPortrait ? 0.55 : 1.0;
     const mainVelocities = new Float32Array(mainRoseCount * 3);
     const mainRotations = new Float32Array(mainRoseCount);
     const mainRotationSpeeds = new Float32Array(mainRoseCount);
@@ -309,12 +332,12 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
       const dy = mainRose.positions[i * 3 + 1];
       const dz = mainRose.positions[i * 3 + 2];
       const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-      const speed = 0.03 + Math.random() * 0.06;
-      mainVelocities[i * 3] = (dx / len) * speed + (Math.random() - 0.5) * 0.04;
-      mainVelocities[i * 3 + 1] = (dy / len) * speed + (Math.random() - 0.5) * 0.04;
-      mainVelocities[i * 3 + 2] = (dz / len) * speed + (Math.random() - 0.5) * 0.04;
+      const speed = (0.03 + Math.random() * 0.06) * mainSpeedScale;
+      mainVelocities[i * 3] = (dx / len) * speed + (Math.random() - 0.5) * 0.04 * mainSpeedScale;
+      mainVelocities[i * 3 + 1] = (dy / len) * speed + (Math.random() - 0.5) * 0.04 * mainSpeedScale;
+      mainVelocities[i * 3 + 2] = (dz / len) * speed + (Math.random() - 0.5) * 0.04 * mainSpeedScale;
       mainRotations[i] = Math.random() * Math.PI * 2;
-      mainRotationSpeeds[i] = (Math.random() - 0.5) * 0.15;
+      mainRotationSpeeds[i] = (Math.random() - 0.5) * 0.15 * mainSpeedScale;
     }
     roseData.unshift({
       points: mainPoints,
@@ -326,7 +349,6 @@ export default function RoseExplosion({ trigger, onComplete, particleCount = 400
     });
 
     // ===== 背景光点粒子 =====
-    const sparkleCount = 800;
     const sparkleGeo = new THREE.BufferGeometry();
     const sparklePositions = new Float32Array(sparkleCount * 3);
     const sparkleColors = new Float32Array(sparkleCount * 3);
