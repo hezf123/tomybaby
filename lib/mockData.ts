@@ -89,6 +89,16 @@ const initialUsers: User[] = [
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
+  {
+    id: '8',
+    username: 'chenhuan666',
+    password: 'chenhuan1314520',
+    birthday: '2004-02-27',
+    name: '凌凌宝宝',
+    avatar: '🌹',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
 ];
 
 // 计算initialUsers的指纹（用于检测代码修改）
